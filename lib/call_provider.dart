@@ -23,7 +23,7 @@ class CallProvider extends ChangeNotifier {
   Widget? remoteView;
 
   String? roomId = 'Room-ID';
-  int? localUserId = 741852963;
+  int? localUserId = 741852964;
 
   initZegoCloud(BuildContext context) {
     ZegoExpressEngine.createEngineWithProfile(ZegoEngineProfile(
@@ -62,6 +62,7 @@ class CallProvider extends ChangeNotifier {
     }).then((canvasViewWidget) {
       if (canvasViewWidget != null) {
         remoteView = canvasViewWidget;
+        notifyListeners();
       }
     });
   }
@@ -83,7 +84,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQZxbgAEGFtaXM5eWsyaWM1Y3l4ZWcAsFB7P+pnRBEk1TmYVM+WENJ46NC5SSWGZHXT7xbV39scael+EwUG0IwYPNyle5Y1QQSny6gPJncUFLAbT3r5pHA9lt9xEcw3ixPva7Rd/k5gOiU/vxmrF5kukyDbl8hdadstmiylv8lN1TR+imlC36WBdgTB0zjEQ1ONvw+Eic9zS2h7XLtuSdrmNlJH8Hr+8VMiZwoJnPlSvxp0uuPnxP1YYsJYvWnDmyUMWxbsaCcJ';
+        '04AAAAAGQZxZ0AEHJrd3pnZjJlMDdkM3ZybDkAsGFP1N+wJt/fPPyx6sp0cGIlTF6qAgGwv9u1NJxaav1wOVcs+gGoIU0krl2Ov1IwdY4u6kqHTrk71c6W+Kas5PuVfv9cA1ECOamnIaOp3dMNGFek9XB6qs8jj8yu6rwABOED4gj40+ij7X9yQ3w1oWzrNYSb+JnCLg8tzD3x04iETWj8m9yJWvTDpLutrUEMhAhAMooUDYDGFNxyEDI4AzEqFhWSsH5gOTTBu6R5/cII';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 
@@ -105,6 +106,8 @@ class CallProvider extends ChangeNotifier {
   }
 
   void logoutRoom() {
+    localView = null;
+    remoteView = null;
     ZegoExpressEngine.instance.logoutRoom();
   }
 

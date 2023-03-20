@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:provider/provider.dart';
 import 'package:zegotrial3/call_provider.dart';
 
@@ -10,6 +11,7 @@ class CallPage extends StatefulWidget {
 }
 
 class _CallPageState extends State<CallPage> {
+  bool showRemoteView = true;
   // Widget? callProvider.localView;
 
   late CallProvider callProvider;
@@ -26,6 +28,16 @@ class _CallPageState extends State<CallPage> {
     navigator.pop();
   }
 
+  toggleRemoteView() {
+    setState(() {
+      showRemoteView = !showRemoteView;
+    });
+  }
+
+  double get height {
+    return 16 / 9 * MediaQuery.of(context).size.width / 3;
+  }
+
   @override
   Widget build(BuildContext context) {
     callProvider = Provider.of<CallProvider>(context);
@@ -35,15 +47,64 @@ class _CallPageState extends State<CallPage> {
         children: [
           callProvider.localView ?? Container(),
           Positioned(
-            top: MediaQuery.of(context).size.height / 20,
-            right: MediaQuery.of(context).size.width / 20,
-            child: SizedBox(
-              width: MediaQuery.of(context).size.width / 3,
-              child: AspectRatio(
-                aspectRatio: 9.0 / 16.0,
-                child: callProvider.remoteView ??
-                    Container(color: Colors.transparent),
-              ),
+            top: 10,
+            left: 5,
+            child: Column(
+              children: [
+                AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  width: MediaQuery.of(context).size.width - 15,
+                  height: showRemoteView ? height : 0,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        for (int i = 0; i <= 10; i++)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 10),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(50),
+                              ),
+                              width: MediaQuery.of(context).size.width / 3,
+                              child: AspectRatio(
+                                aspectRatio: 9.0 / 16.0,
+                                child: Stack(
+                                  children: [
+                                    callProvider.remoteView ??
+                                        Container(color: Colors.transparent),
+                                    Text('data'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                SizedBox(
+                  width: MediaQuery.of(context).size.width,
+                  child: Center(
+                    child: InkWell(
+                      onTap: toggleRemoteView,
+                      child: Container(
+                        color: Colors.white30,
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 3),
+                        child: Icon(
+                          showRemoteView
+                              ? Icons.arrow_drop_up
+                              : Icons.arrow_drop_down,
+                          color: Colors.white,
+                          size: 35,
+                        ),
+                      ),
+                    ),
+                  ),
+                )
+              ],
             ),
           ),
           Positioned(
