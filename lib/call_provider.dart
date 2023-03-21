@@ -120,7 +120,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQZxZ0AEHJrd3pnZjJlMDdkM3ZybDkAsGFP1N+wJt/fPPyx6sp0cGIlTF6qAgGwv9u1NJxaav1wOVcs+gGoIU0krl2Ov1IwdY4u6kqHTrk71c6W+Kas5PuVfv9cA1ECOamnIaOp3dMNGFek9XB6qs8jj8yu6rwABOED4gj40+ij7X9yQ3w1oWzrNYSb+JnCLg8tzD3x04iETWj8m9yJWvTDpLutrUEMhAhAMooUDYDGFNxyEDI4AzEqFhWSsH5gOTTBu6R5/cII';
+        '04AAAAAGQbIygAEGF1ZzBnM3p3Ymhid21lYXIAsP2qFj57fgz12orDCkbshzcVPWCa5EdKydltFNqI+IKWizMT5Sa67pcRwzOtWS5maEc9KDgdOJoFTfumDZ/JQRs5mPTeJ7Ii22d57owndrfGALGZdH3U8kJy+iH0gTTeT5ClnPE1ZbLp+aEeSSEOO1Z0PUeWbG1J30Fk6sZIN1CjTXNbQWc84oAz98WegZpu/Dv5xsU3HwZuzZ7dYFD8Kvv3vXc5bQA/u8Jc5ttEEuNG';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 

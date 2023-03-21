@@ -60,7 +60,7 @@ class _CallPageState extends State<CallPage> {
                     child: Row(
                       children: [
                         for (int i = 0;
-                            i <= callProvider.remoteViews.length;
+                            i < callProvider.remoteViews.length;
                             i++)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10),
