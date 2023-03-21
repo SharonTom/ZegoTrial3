@@ -38,6 +38,7 @@ class CallProvider extends ChangeNotifier {
   // Zego
   String? zegoToken;
   UserView? localUser;
+  UserView? _activeViewFullScreen;
   List<UserView> remoteViews = [];
 
   String? roomId = 'Room-ID';
@@ -54,11 +55,25 @@ class CallProvider extends ChangeNotifier {
   }
 
   UserView? get fullScreenView {
-    return localUser;
+    return _activeViewFullScreen;
   }
 
   List<UserView> get floatingViews {
-    return remoteViews;
+    if (_activeViewFullScreen?.id == localUser?.id) {
+      return remoteViews;
+    }
+    final views = remoteViews
+        .where((value) => value.id != _activeViewFullScreen?.id)
+        .toList();
+    return [
+      if (localUser != null) localUser!,
+      ...views,
+    ];
+  }
+
+  setActiveUser(UserView user) {
+    _activeViewFullScreen = user;
+    notifyListeners();
   }
 
   void startPreview(ZegoUser user) {
@@ -71,6 +86,7 @@ class CallProvider extends ChangeNotifier {
     }).then((canvasViewWidget) {
       if (canvasViewWidget != null) {
         localUser = UserView(id: id, view: canvasViewWidget, user: user);
+        _activeViewFullScreen = localUser;
       }
       notifyListeners();
     });
@@ -82,7 +98,7 @@ class CallProvider extends ChangeNotifier {
   }
 
   void startPlayStream(String streamID, ZegoUser user) {
-// Start to play streams. Set the view for rendering the remote streams.
+    // Start to play streams. Set the view for rendering the remote streams.
     late int id;
     ZegoExpressEngine.instance.createCanvasView((viewID) {
       id = viewID;
@@ -104,6 +120,10 @@ class CallProvider extends ChangeNotifier {
 
       ZegoExpressEngine.instance.destroyCanvasView(view.id);
       remoteViews.remove(view);
+      if (view.id == _activeViewFullScreen?.id) {
+        _activeViewFullScreen = localUser;
+      }
+      notifyListeners();
     } catch (e) {
       print('user remove failed');
     }

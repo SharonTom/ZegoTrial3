@@ -11,7 +11,7 @@ class CallPage extends StatefulWidget {
 }
 
 class _CallPageState extends State<CallPage> {
-  bool showRemoteView = true;
+  bool _showRemoteView = true;
   // Widget? callProvider.localView;
 
   late CallProvider callProvider;
@@ -30,12 +30,20 @@ class _CallPageState extends State<CallPage> {
 
   toggleRemoteView() {
     setState(() {
-      showRemoteView = !showRemoteView;
+      _showRemoteView = !_showRemoteView;
     });
+  }
+
+  bool get showRemoteView {
+    return _showRemoteView && callProvider.remoteViews.isNotEmpty;
   }
 
   double get height {
     return 16 / 9 * MediaQuery.of(context).size.width / 3;
+  }
+
+  setActiveUser(UserView user) {
+    callProvider.setActiveUser(user);
   }
 
   @override
@@ -60,23 +68,27 @@ class _CallPageState extends State<CallPage> {
                     child: Row(
                       children: [
                         for (int i = 0;
-                            i < callProvider.remoteViews.length;
+                            i < callProvider.floatingViews.length;
                             i++)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(50),
-                              ),
-                              width: MediaQuery.of(context).size.width / 3,
-                              child: AspectRatio(
-                                aspectRatio: 9.0 / 16.0,
-                                child: Stack(
-                                  children: [
-                                    callProvider.remoteViews[i].view,
-                                    Text(callProvider
-                                        .remoteViews[i].user.userName),
-                                  ],
+                            child: InkWell(
+                              onTap: () =>
+                                  setActiveUser(callProvider.floatingViews[i]),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(50),
+                                ),
+                                width: MediaQuery.of(context).size.width / 3,
+                                child: AspectRatio(
+                                  aspectRatio: 9.0 / 16.0,
+                                  child: Stack(
+                                    children: [
+                                      callProvider.floatingViews[i].view,
+                                      Text(callProvider
+                                          .floatingViews[i].user.userName),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
