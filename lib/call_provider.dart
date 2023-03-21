@@ -233,13 +233,22 @@ class CallProvider extends ChangeNotifier {
   toggleVideo() {
     final user = ZegoUser('$localUserId', 'User 1');
     if (localUser != null && localUser!.isVideoOn) {
-      stopPreview();
+      ZegoExpressEngine.instance.mutePublishStreamVideo(true);
     } else {
-      startPreview(user);
+      ZegoExpressEngine.instance.mutePublishStreamVideo(false);
     }
+    localUser?.isVideoOn = !localUser!.isVideoOn;
   }
 
-  toggleAudio() {}
+  toggleAudio() {
+    final user = ZegoUser('$localUserId', 'User 1');
+    if (localUser != null && localUser!.isAudioOn) {
+      ZegoExpressEngine.instance.muteMicrophone(true);
+    } else {
+      ZegoExpressEngine.instance.muteMicrophone(false);
+    }
+    localUser?.isAudioOn = !localUser!.isAudioOn;
+  }
 
   toggleScreenShare() {}
 }
