@@ -42,7 +42,7 @@ class CallProvider extends ChangeNotifier {
   List<UserView> remoteViews = [];
 
   String? roomId = 'Room-ID';
-  int? localUserId = 741852963;
+  int? localUserId = 741852964;
 
   initZegoCloud(BuildContext context) {
     ZegoExpressEngine.createEngineWithProfile(ZegoEngineProfile(
@@ -76,27 +76,26 @@ class CallProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void startPreview(ZegoUser user) {
+  Future<void> startPreview(ZegoUser user) async {
     late int id;
-    ZegoExpressEngine.instance.createCanvasView((viewID) {
+    final canvas = await ZegoExpressEngine.instance.createCanvasView((viewID) {
       id = viewID;
       ZegoCanvas previewCanvas =
           ZegoCanvas(viewID, viewMode: ZegoViewMode.AspectFill);
       ZegoExpressEngine.instance.startPreview(canvas: previewCanvas);
-    }).then((canvasViewWidget) {
-      if (canvasViewWidget != null) {
-        localUser = UserView(
-          id: id,
-          view: canvasViewWidget,
-          user: user,
-          isVideoOn: isVideoOn,
-          isScreenShare: isScreenShared,
-          isAudioOn: isAudioOn,
-        );
-        _activeViewFullScreen = localUser;
-      }
-      notifyListeners();
     });
+    if (canvas != null) {
+      localUser = UserView(
+        id: id,
+        view: canvas,
+        user: user,
+        isVideoOn: isVideoOn,
+        isScreenShare: isScreenShared,
+        isAudioOn: isAudioOn,
+      );
+      _activeViewFullScreen = localUser;
+    }
+    notifyListeners();
   }
 
   void stopPreview() {
@@ -147,7 +146,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQbJEYAEGkzcnprZTkybjBkZnNlMGUAsPIopAZXduBosWhAwDhvm5eiw6e3vBYKY9nOX0uXwv/b7hiTtVsF5TiKmEp8vy/srhsuOQwX4EtMcqcwZO1KbGb7J+Sf65lppMHwzmDC0fD9b+z1lqNE75+Hz4RSC/DmdOCiyQtm5nXgyV+cDE27teH31Zd9dgmsPEA/215TXoGmw+qvfbJPxUb4qRMQUGUm1MT/xSn0oRQ/QL2YaSluPEma0/gZdMlI/3bFkTOpxgO9';
+        '04AAAAAGQbIygAEGF1ZzBnM3p3Ymhid21lYXIAsP2qFj57fgz12orDCkbshzcVPWCa5EdKydltFNqI+IKWizMT5Sa67pcRwzOtWS5maEc9KDgdOJoFTfumDZ/JQRs5mPTeJ7Ii22d57owndrfGALGZdH3U8kJy+iH0gTTeT5ClnPE1ZbLp+aEeSSEOO1Z0PUeWbG1J30Fk6sZIN1CjTXNbQWc84oAz98WegZpu/Dv5xsU3HwZuzZ7dYFD8Kvv3vXc5bQA/u8Jc5ttEEuNG';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 
@@ -155,11 +154,11 @@ class CallProvider extends ChangeNotifier {
     // Users must log in to the same room to call each other.
     ZegoExpressEngine.instance
         .loginRoom('$roomId', user, config: roomConfig)
-        .then((ZegoRoomLoginResult loginRoomResult) {
+        .then((ZegoRoomLoginResult loginRoomResult) async {
       debugPrint(
           'loginRoom: errorCode:${loginRoomResult.errorCode}, extendedData:${loginRoomResult.extendedData}');
       if (loginRoomResult.errorCode == 0) {
-        startPreview(user); // local view
+        await startPreview(user); // local view
         startPublish(); // send local user to remote
         localUserJoined = true;
       } else {
@@ -178,6 +177,7 @@ class CallProvider extends ChangeNotifier {
     // After calling the `loginRoom` method, call this method to publish streams.
     // The StreamID must be unique in the room.
     String streamID = '${roomId}_${Random().nextInt(1500)}_call_1';
+    setVideoAndAudioState();
     ZegoExpressEngine.instance.startPublishingStream(streamID);
   }
 
@@ -231,47 +231,57 @@ class CallProvider extends ChangeNotifier {
   }
 
   toggleVideo() {
-    final user = ZegoUser('$localUserId', 'User 1');
     if (localUser != null && localUser!.isVideoOn) {
-      ZegoExpressEngine.instance.mutePublishStreamVideo(true);
+      // ZegoExpressEngine.instance.mutePublishStreamVideo(true);
+      ZegoExpressEngine.instance.enableCamera(false);
     } else {
-      ZegoExpressEngine.instance.mutePublishStreamVideo(false);
+      ZegoExpressEngine.instance.enableCamera(true);
+      // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
     }
     localUser?.isVideoOn = !localUser!.isVideoOn;
     notifyListeners();
   }
 
   toggleAudio() {
-    final user = ZegoUser('$localUserId', 'User 1');
     if (localUser != null && localUser!.isAudioOn) {
-      ZegoExpressEngine.instance.muteMicrophone(true);
+      // ZegoExpressEngine.instance.muteMicrophone(true);
+      ZegoExpressEngine.instance.enableAudioCaptureDevice(false);
     } else {
-      ZegoExpressEngine.instance.muteMicrophone(false);
+      // ZegoExpressEngine.instance.muteMicrophone(false);
+      ZegoExpressEngine.instance.enableAudioCaptureDevice(true);
     }
     localUser?.isAudioOn = !localUser!.isAudioOn;
     notifyListeners();
   }
 
   toggleScreenShare() async {
-    final user = ZegoUser('$localUserId', 'User 1');
     ZegoScreenCaptureSource? source =
         await ZegoExpressEngine.instance.createScreenCaptureSource();
-    if (localUser != null && localUser!.isScreenShare) {
+    if (localUser == null) {
+      return;
+    }
+    if (localUser!.isScreenShare) {
+      ZegoExpressEngine.instance.setVideoSource(ZegoVideoSourceType.Camera);
+      source?.stopCapture();
+
+      setVideoAndAudioState();
+    } else {
+      source?.startCapture();
+      ZegoExpressEngine.instance.mutePublishStreamVideo(false);
       ZegoExpressEngine.instance
           .setVideoSource(ZegoVideoSourceType.ScreenCapture);
-
-      ZegoExpressEngine.instance.mutePublishStreamVideo(false);
-      source?.startCapture();
-    } else {
-      source?.stopCapture();
-      ZegoExpressEngine.instance.setVideoSource(ZegoVideoSourceType.Camera);
-      if (localUser != null && localUser!.isVideoOn) {
-        ZegoExpressEngine.instance.mutePublishStreamVideo(false);
-      } else {
-        ZegoExpressEngine.instance.mutePublishStreamVideo(true);
-      }
     }
     localUser?.isScreenShare = !localUser!.isScreenShare;
     notifyListeners();
+  }
+
+  setVideoAndAudioState() {
+    if (localUser == null) {
+      return;
+    }
+    ZegoExpressEngine.instance.enableCamera(localUser?.isVideoOn ?? false);
+
+    ZegoExpressEngine.instance
+        .enableAudioCaptureDevice(localUser?.isAudioOn ?? false);
   }
 }
