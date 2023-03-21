@@ -4,6 +4,26 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:zego_express_engine/zego_express_engine.dart';
 
+class UserView {
+  int id;
+  Widget view;
+  String name;
+  bool isMicOn;
+  bool isVideoOn;
+  bool isScreenShare;
+  ZegoUser user;
+
+  UserView({
+    required this.id,
+    required this.view,
+    required this.user,
+    this.name = 'User',
+    this.isMicOn = true,
+    this.isVideoOn = false,
+    this.isScreenShare = false,
+  });
+}
+
 class CallProvider extends ChangeNotifier {
   bool localUserJoined = false;
   bool initialized = false;
@@ -17,10 +37,8 @@ class CallProvider extends ChangeNotifier {
 
   // Zego
   String? zegoToken;
-  int? localViewID;
-  Widget? localView;
-  int? remoteViewID;
-  Widget? remoteView;
+  UserView? localUser;
+  List<UserView> remoteViews = [];
 
   String? roomId = 'Room-ID';
   int? localUserId = 741852964;
@@ -35,42 +53,60 @@ class CallProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void startPreview() {
+  UserView? get fullScreenView {
+    return localUser;
+  }
+
+  List<UserView> get floatingViews {
+    return remoteViews;
+  }
+
+  void startPreview(ZegoUser user) {
+    late int id;
     ZegoExpressEngine.instance.createCanvasView((viewID) {
-      localViewID = viewID;
+      id = viewID;
       ZegoCanvas previewCanvas =
           ZegoCanvas(viewID, viewMode: ZegoViewMode.AspectFill);
       ZegoExpressEngine.instance.startPreview(canvas: previewCanvas);
     }).then((canvasViewWidget) {
-      localView = canvasViewWidget;
+      if (canvasViewWidget != null) {
+        localUser = UserView(id: id, view: canvasViewWidget, user: user);
+      }
       notifyListeners();
     });
   }
 
   void stopPreview() {
     ZegoExpressEngine.instance.stopPreview();
-    localView = null;
-    localViewID = null;
+    localUser = null;
   }
 
-  void startPlayStream(String streamID) {
+  void startPlayStream(String streamID, ZegoUser user) {
 // Start to play streams. Set the view for rendering the remote streams.
+    late int id;
     ZegoExpressEngine.instance.createCanvasView((viewID) {
-      remoteViewID = viewID;
+      id = viewID;
       ZegoCanvas canvas = ZegoCanvas(viewID, viewMode: ZegoViewMode.AspectFill);
       ZegoExpressEngine.instance.startPlayingStream(streamID, canvas: canvas);
     }).then((canvasViewWidget) {
       if (canvasViewWidget != null) {
-        remoteView = canvasViewWidget;
+        remoteViews.add(UserView(id: id, view: canvasViewWidget, user: user));
         notifyListeners();
       }
     });
   }
 
-  void stopPlayStream(String streamID) {
+  void stopPlayStream(String streamID, ZegoUser user) {
     ZegoExpressEngine.instance.stopPlayingStream(streamID);
-    ZegoExpressEngine.instance.destroyCanvasView(remoteViewID!);
-    remoteView = null;
+    try {
+      final view = remoteViews
+          .firstWhere((element) => element.user.userID == user.userID);
+
+      ZegoExpressEngine.instance.destroyCanvasView(view.id);
+      remoteViews.remove(view);
+    } catch (e) {
+      print('user remove failed');
+    }
   }
 
   void loginRoom() {
@@ -96,7 +132,7 @@ class CallProvider extends ChangeNotifier {
       debugPrint(
           'loginRoom: errorCode:${loginRoomResult.errorCode}, extendedData:${loginRoomResult.extendedData}');
       if (loginRoomResult.errorCode == 0) {
-        startPreview(); // local view
+        startPreview(user); // local view
         startPublish(); // send local user to remote
         localUserJoined = true;
       } else {
@@ -106,8 +142,8 @@ class CallProvider extends ChangeNotifier {
   }
 
   void logoutRoom() {
-    localView = null;
-    remoteView = null;
+    localUser = null;
+    remoteViews = [];
     ZegoExpressEngine.instance.logoutRoom();
   }
 
@@ -137,11 +173,11 @@ class CallProvider extends ChangeNotifier {
           'onRoomStreamUpdate: roomID: $roomID, updateType: $updateType, streamList: ${streamList.map((e) => e.streamID)}, extendedData: $extendedData');
       if (updateType == ZegoUpdateType.Add) {
         for (final stream in streamList) {
-          startPlayStream(stream.streamID);
+          startPlayStream(stream.streamID, stream.user);
         }
       } else {
         for (final stream in streamList) {
-          stopPlayStream(stream.streamID);
+          stopPlayStream(stream.streamID, stream.user);
         }
       }
     };

@@ -45,7 +45,7 @@ class _CallPageState extends State<CallPage> {
       appBar: AppBar(title: const Text("Call Page")),
       body: Stack(
         children: [
-          callProvider.localView ?? Container(),
+          callProvider.fullScreenView?.view ?? Container(),
           Positioned(
             top: 10,
             left: 5,
@@ -59,7 +59,9 @@ class _CallPageState extends State<CallPage> {
                     scrollDirection: Axis.horizontal,
                     child: Row(
                       children: [
-                        for (int i = 0; i <= 10; i++)
+                        for (int i = 0;
+                            i <= callProvider.remoteViews.length;
+                            i++)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 10),
                             child: Container(
@@ -71,9 +73,9 @@ class _CallPageState extends State<CallPage> {
                                 aspectRatio: 9.0 / 16.0,
                                 child: Stack(
                                   children: [
-                                    callProvider.remoteView ??
-                                        Container(color: Colors.transparent),
-                                    Text('data'),
+                                    callProvider.remoteViews[i].view,
+                                    Text(callProvider
+                                        .remoteViews[i].user.userName),
                                   ],
                                 ),
                               ),
