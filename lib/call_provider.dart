@@ -42,7 +42,7 @@ class CallProvider extends ChangeNotifier {
   List<UserView> remoteViews = [];
 
   String? roomId = 'Room-ID';
-  int? localUserId = 741852964;
+  int? localUserId = 741852963;
 
   initZegoCloud(BuildContext context) {
     ZegoExpressEngine.createEngineWithProfile(ZegoEngineProfile(
@@ -147,7 +147,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQbIygAEGF1ZzBnM3p3Ymhid21lYXIAsP2qFj57fgz12orDCkbshzcVPWCa5EdKydltFNqI+IKWizMT5Sa67pcRwzOtWS5maEc9KDgdOJoFTfumDZ/JQRs5mPTeJ7Ii22d57owndrfGALGZdH3U8kJy+iH0gTTeT5ClnPE1ZbLp+aEeSSEOO1Z0PUeWbG1J30Fk6sZIN1CjTXNbQWc84oAz98WegZpu/Dv5xsU3HwZuzZ7dYFD8Kvv3vXc5bQA/u8Jc5ttEEuNG';
+        '04AAAAAGQbJEYAEGkzcnprZTkybjBkZnNlMGUAsPIopAZXduBosWhAwDhvm5eiw6e3vBYKY9nOX0uXwv/b7hiTtVsF5TiKmEp8vy/srhsuOQwX4EtMcqcwZO1KbGb7J+Sf65lppMHwzmDC0fD9b+z1lqNE75+Hz4RSC/DmdOCiyQtm5nXgyV+cDE27teH31Zd9dgmsPEA/215TXoGmw+qvfbJPxUb4qRMQUGUm1MT/xSn0oRQ/QL2YaSluPEma0/gZdMlI/3bFkTOpxgO9';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 
@@ -238,6 +238,7 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.mutePublishStreamVideo(false);
     }
     localUser?.isVideoOn = !localUser!.isVideoOn;
+    notifyListeners();
   }
 
   toggleAudio() {
@@ -248,7 +249,29 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.muteMicrophone(false);
     }
     localUser?.isAudioOn = !localUser!.isAudioOn;
+    notifyListeners();
   }
 
-  toggleScreenShare() {}
+  toggleScreenShare() async {
+    final user = ZegoUser('$localUserId', 'User 1');
+    ZegoScreenCaptureSource? source =
+        await ZegoExpressEngine.instance.createScreenCaptureSource();
+    if (localUser != null && localUser!.isScreenShare) {
+      ZegoExpressEngine.instance
+          .setVideoSource(ZegoVideoSourceType.ScreenCapture);
+
+      ZegoExpressEngine.instance.mutePublishStreamVideo(false);
+      source?.startCapture();
+    } else {
+      source?.stopCapture();
+      ZegoExpressEngine.instance.setVideoSource(ZegoVideoSourceType.Camera);
+      if (localUser != null && localUser!.isVideoOn) {
+        ZegoExpressEngine.instance.mutePublishStreamVideo(false);
+      } else {
+        ZegoExpressEngine.instance.mutePublishStreamVideo(true);
+      }
+    }
+    localUser?.isScreenShare = !localUser!.isScreenShare;
+    notifyListeners();
+  }
 }

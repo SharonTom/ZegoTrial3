@@ -176,8 +176,21 @@ class _CallPageState extends State<CallPage> {
                     child: Center(
                         child: Icon(
                       localUser != null && localUser!.isAudioOn
-                          ? Icons.mic_off_outlined
-                          : Icons.mic_outlined,
+                          ? Icons.mic_outlined
+                          : Icons.mic_off_outlined,
+                      size: 32,
+                    )),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        shape: const CircleBorder(),
+                        backgroundColor: Colors.red),
+                    onPressed: toggleScreenShare,
+                    child: Center(
+                        child: Icon(
+                      localUser != null && localUser!.isScreenShare
+                          ? Icons.mic_outlined
+                          : Icons.mic_off_outlined,
                       size: 32,
                     )),
                   ),
