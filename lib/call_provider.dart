@@ -8,7 +8,7 @@ class UserView {
   int id;
   Widget view;
   String name;
-  bool isMicOn;
+  bool isAudioOn;
   bool isVideoOn;
   bool isScreenShare;
   ZegoUser user;
@@ -18,7 +18,7 @@ class UserView {
     required this.view,
     required this.user,
     this.name = 'User',
-    this.isMicOn = true,
+    this.isAudioOn = true,
     this.isVideoOn = false,
     this.isScreenShare = false,
   });
@@ -85,7 +85,14 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.startPreview(canvas: previewCanvas);
     }).then((canvasViewWidget) {
       if (canvasViewWidget != null) {
-        localUser = UserView(id: id, view: canvasViewWidget, user: user);
+        localUser = UserView(
+          id: id,
+          view: canvasViewWidget,
+          user: user,
+          isVideoOn: isVideoOn,
+          isScreenShare: isScreenShared,
+          isAudioOn: isAudioOn,
+        );
         _activeViewFullScreen = localUser;
       }
       notifyListeners();
@@ -222,4 +229,17 @@ class CallProvider extends ChangeNotifier {
     ZegoExpressEngine.onRoomStateUpdate = null;
     ZegoExpressEngine.onPublisherStateUpdate = null;
   }
+
+  toggleVideo() {
+    final user = ZegoUser('$localUserId', 'User 1');
+    if (localUser != null && localUser!.isVideoOn) {
+      stopPreview();
+    } else {
+      startPreview(user);
+    }
+  }
+
+  toggleAudio() {}
+
+  toggleScreenShare() {}
 }

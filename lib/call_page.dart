@@ -42,8 +42,24 @@ class _CallPageState extends State<CallPage> {
     return 16 / 9 * MediaQuery.of(context).size.width / 3;
   }
 
+  UserView? get localUser {
+    return callProvider.localUser;
+  }
+
   setActiveUser(UserView user) {
     callProvider.setActiveUser(user);
+  }
+
+  toggleVideo() {
+    callProvider.toggleVideo();
+  }
+
+  toggleAudio() {
+    callProvider.toggleAudio();
+  }
+
+  toggleScreenShare() {
+    callProvider.toggleScreenShare();
   }
 
   @override
@@ -138,6 +154,19 @@ class _CallPageState extends State<CallPage> {
                         backgroundColor: Colors.red),
                     onPressed: leaveCall,
                     child: const Center(child: Icon(Icons.call_end, size: 32)),
+                  ),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        shape: const CircleBorder(),
+                        backgroundColor: Colors.red),
+                    onPressed: toggleVideo,
+                    child: Center(
+                        child: Icon(
+                      localUser != null && localUser!.isVideoOn
+                          ? Icons.videocam_off_outlined
+                          : Icons.videocam_outlined,
+                      size: 32,
+                    )),
                   ),
                 ],
               ),
