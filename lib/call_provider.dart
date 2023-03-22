@@ -70,6 +70,7 @@ class CallProvider extends ChangeNotifier {
   bool leftChannel = true;
   bool isAudioOn = true;
   bool isVideoOn = true;
+  bool isFrontCamera = true;
   bool isScreenShared = false;
   bool isPublisher = false;
   String? token;
@@ -183,6 +184,9 @@ class CallProvider extends ChangeNotifier {
       view.isAudioOn = extraInfo.isAudioOn;
       view.isVideoOn = extraInfo.isVideoOn;
       view.isScreenShare = extraInfo.isScreenShare;
+      if (extraInfo.isScreenShare) {
+        setActiveUser(view);
+      }
     } catch (e) {
       // view not found
     }
@@ -322,10 +326,18 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.enableCamera(false);
     } else {
       ZegoExpressEngine.instance.enableCamera(true);
+      ZegoExpressEngine.instance.setVideoSource(ZegoVideoSourceType.Camera);
+      localUser!.isScreenShare = false;
       // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
     }
     localUser!.isVideoOn = !localUser!.isVideoOn;
     ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
+    notifyListeners();
+  }
+
+  toggleCamera() {
+    isFrontCamera = !isFrontCamera;
+    ZegoExpressEngine.instance.useFrontCamera(isFrontCamera);
     notifyListeners();
   }
 
@@ -355,12 +367,11 @@ class CallProvider extends ChangeNotifier {
       setVideoAndAudioState();
     } else {
       await source?.startCapture();
-      ZegoExpressEngine.instance.enableCamera(true);
       // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
-      ZegoExpressEngine.instance.setVideoSource(
-        ZegoVideoSourceType
-            .ScreenCapture, /* channel: ZegoPublishChannel.Main */
-      );
+      await ZegoExpressEngine.instance
+          .setVideoSource(ZegoVideoSourceType.ScreenCapture);
+
+      ZegoExpressEngine.instance.enableCamera(true);
     }
     localUser!.isScreenShare = !localUser!.isScreenShare;
     ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);

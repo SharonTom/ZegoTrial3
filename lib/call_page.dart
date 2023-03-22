@@ -220,6 +220,10 @@ class _ZegoCallButtonsState extends State<ZegoCallButtons> {
     callProvider.toggleVideo();
   }
 
+  toggleCamera() {
+    callProvider.toggleCamera();
+  }
+
   toggleAudio() {
     callProvider.toggleAudio();
   }
@@ -270,6 +274,15 @@ class _ZegoCallButtonsState extends State<ZegoCallButtons> {
                               : Icons.videocam_off_outlined,
                           size: 32,
                         ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor: Colors.blue[900]),
+                      onPressed: toggleCamera,
+                      child: Center(
+                        child: Icon(Icons.cameraswitch_outlined, size: 32),
                       ),
                     ),
                     ElevatedButton(
