@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/foundation.dart';
@@ -22,6 +23,45 @@ class UserView {
     this.isVideoOn = false,
     this.isScreenShare = false,
   });
+
+  String get iconText => user.userName.characters.first;
+
+  String get extraInfo => ExtraInfo(
+          isAudioOn: isAudioOn,
+          isVideoOn: isVideoOn,
+          isScreenShare: isScreenShare)
+      .toJson;
+
+  static decodeExtraInfo(String _extraInfo) {
+    return ExtraInfo.fromJson(_extraInfo);
+  }
+}
+
+class ExtraInfo {
+  bool isAudioOn;
+  bool isVideoOn;
+  bool isScreenShare;
+
+  ExtraInfo(
+      {required this.isAudioOn,
+      required this.isVideoOn,
+      required this.isScreenShare});
+
+  String get toJson {
+    return jsonEncode({
+      'isAudioOn': isAudioOn,
+      'isVideoOn': isVideoOn,
+      'isScreenShare': isScreenShare
+    });
+  }
+
+  factory ExtraInfo.fromJson(String data) {
+    final json = jsonDecode(data);
+    return ExtraInfo(
+        isAudioOn: json['isAudioOn'],
+        isVideoOn: json['isVideoOn'],
+        isScreenShare: json['isScreenShare']);
+  }
 }
 
 class CallProvider extends ChangeNotifier {
@@ -146,7 +186,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQbIygAEGF1ZzBnM3p3Ymhid21lYXIAsP2qFj57fgz12orDCkbshzcVPWCa5EdKydltFNqI+IKWizMT5Sa67pcRwzOtWS5maEc9KDgdOJoFTfumDZ/JQRs5mPTeJ7Ii22d57owndrfGALGZdH3U8kJy+iH0gTTeT5ClnPE1ZbLp+aEeSSEOO1Z0PUeWbG1J30Fk6sZIN1CjTXNbQWc84oAz98WegZpu/Dv5xsU3HwZuzZ7dYFD8Kvv3vXc5bQA/u8Jc5ttEEuNG';
+        '04AAAAAGQcaWAAEHB1bjdvbXg4cHl4ZjB1Nm4AsIIUr6cC9ypBtdAaGmFeUCGS1cBSgiVU+sbkCdwpjHSCzx6ToZDQgMq1KpWloLocapgPOvo16HGcEfYLzh5BA/bAMl1B4eSKpQ0MswRarzEWX32NfV8Jh5mEhdPDMrrlse3jzKT+u2yT7vW72ofid+3JggOvZl6QKVbFx8DW+U6zchIXDjP5YH6mC3X4b6NhSM5hdYiQPuXZNYluIx3h7t0w1WBWusiyhngEUvfTqoSA';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 
@@ -178,10 +218,12 @@ class CallProvider extends ChangeNotifier {
     // The StreamID must be unique in the room.
     String streamID = '${roomId}_${Random().nextInt(1500)}_call_1';
     setVideoAndAudioState();
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
     ZegoExpressEngine.instance.startPublishingStream(streamID);
   }
 
   void stopPublish() {
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
     ZegoExpressEngine.instance.stopPublishingStream();
   }
 
@@ -200,6 +242,7 @@ class CallProvider extends ChangeNotifier {
           'onRoomStreamUpdate: roomID: $roomID, updateType: $updateType, streamList: ${streamList.map((e) => e.streamID)}, extendedData: $extendedData');
       if (updateType == ZegoUpdateType.Add) {
         for (final stream in streamList) {
+          debugPrint('streaminfo: ${stream.extraInfo}');
           startPlayStream(stream.streamID, stream.user);
         }
       } else {
@@ -221,6 +264,8 @@ class CallProvider extends ChangeNotifier {
       debugPrint(
           'onPublisherStateUpdate: streamID: $streamID, state: ${state.name}, errorCode: $errorCode, extendedData: $extendedData');
     };
+
+    ZegoExpressEngine.onRoomStreamExtraInfoUpdate = (roomID, streamList) => {};
   }
 
   void stopListenEvent() {
@@ -228,6 +273,7 @@ class CallProvider extends ChangeNotifier {
     ZegoExpressEngine.onRoomStreamUpdate = null;
     ZegoExpressEngine.onRoomStateUpdate = null;
     ZegoExpressEngine.onPublisherStateUpdate = null;
+    ZegoExpressEngine.onRoomStreamExtraInfoUpdate = null;
   }
 
   toggleVideo() {
@@ -238,7 +284,8 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.enableCamera(true);
       // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
     }
-    localUser?.isVideoOn = !localUser!.isVideoOn;
+    localUser!.isVideoOn = !localUser!.isVideoOn;
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
     notifyListeners();
   }
 
@@ -250,7 +297,8 @@ class CallProvider extends ChangeNotifier {
       // ZegoExpressEngine.instance.muteMicrophone(false);
       ZegoExpressEngine.instance.enableAudioCaptureDevice(true);
     }
-    localUser?.isAudioOn = !localUser!.isAudioOn;
+    localUser!.isAudioOn = !localUser!.isAudioOn;
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
     notifyListeners();
   }
 
@@ -267,11 +315,15 @@ class CallProvider extends ChangeNotifier {
       setVideoAndAudioState();
     } else {
       source?.startCapture();
-      ZegoExpressEngine.instance.mutePublishStreamVideo(false);
-      ZegoExpressEngine.instance
-          .setVideoSource(ZegoVideoSourceType.ScreenCapture);
+      ZegoExpressEngine.instance.enableCamera(true);
+      // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
+      ZegoExpressEngine.instance.setVideoSource(
+        ZegoVideoSourceType
+            .ScreenCapture, /* channel: ZegoPublishChannel.Main */
+      );
     }
-    localUser?.isScreenShare = !localUser!.isScreenShare;
+    localUser!.isScreenShare = !localUser!.isScreenShare;
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
     notifyListeners();
   }
 
