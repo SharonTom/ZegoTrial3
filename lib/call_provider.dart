@@ -84,12 +84,18 @@ class CallProvider extends ChangeNotifier {
   String? roomId = 'Room-ID';
   int? localUserId = 741852964;
 
+  bool showControls = true;
+
+  toggleControls() {
+    showControls = !showControls;
+    notifyListeners();
+  }
+
   initZegoCloud(BuildContext context) {
     ZegoExpressEngine.createEngineWithProfile(ZegoEngineProfile(
       1155041231,
       ZegoScenario.Default,
     ));
-    startListenEvent();
     initialized = true;
     notifyListeners();
   }
@@ -143,26 +149,51 @@ class CallProvider extends ChangeNotifier {
     localUser = null;
   }
 
-  void startPlayStream(String streamID, ZegoUser user) {
+  void startPlayStream(ZegoStream stream) {
     // Start to play streams. Set the view for rendering the remote streams.
     late int id;
     ZegoExpressEngine.instance.createCanvasView((viewID) {
       id = viewID;
       ZegoCanvas canvas = ZegoCanvas(viewID, viewMode: ZegoViewMode.AspectFill);
-      ZegoExpressEngine.instance.startPlayingStream(streamID, canvas: canvas);
+      ZegoExpressEngine.instance
+          .startPlayingStream(stream.streamID, canvas: canvas);
     }).then((canvasViewWidget) {
       if (canvasViewWidget != null) {
-        remoteViews.add(UserView(id: id, view: canvasViewWidget, user: user));
+        final extraInfo = ExtraInfo.fromJson(stream.extraInfo);
+        remoteViews.add(
+          UserView(
+            id: id,
+            view: canvasViewWidget,
+            user: stream.user,
+            isAudioOn: extraInfo.isAudioOn,
+            isVideoOn: extraInfo.isVideoOn,
+            isScreenShare: extraInfo.isScreenShare,
+          ),
+        );
         notifyListeners();
       }
     });
   }
 
-  void stopPlayStream(String streamID, ZegoUser user) {
-    ZegoExpressEngine.instance.stopPlayingStream(streamID);
+  updateStream(ZegoStream stream) {
     try {
       final view = remoteViews
-          .firstWhere((element) => element.user.userID == user.userID);
+          .firstWhere((element) => element.user.userID == stream.user.userID);
+      final extraInfo = ExtraInfo.fromJson(stream.extraInfo);
+      view.isAudioOn = extraInfo.isAudioOn;
+      view.isVideoOn = extraInfo.isVideoOn;
+      view.isScreenShare = extraInfo.isScreenShare;
+    } catch (e) {
+      // view not found
+    }
+    notifyListeners();
+  }
+
+  void stopPlayStream(ZegoStream stream) {
+    ZegoExpressEngine.instance.stopPlayingStream(stream.streamID);
+    try {
+      final view = remoteViews
+          .firstWhere((element) => element.user.userID == stream.user.userID);
 
       ZegoExpressEngine.instance.destroyCanvasView(view.id);
       remoteViews.remove(view);
@@ -176,6 +207,7 @@ class CallProvider extends ChangeNotifier {
   }
 
   void loginRoom() {
+    startListenEvent();
     // The value of `userID` is generated locally and must be globally unique.
     final user = ZegoUser('$localUserId', 'User 1');
 
@@ -243,11 +275,11 @@ class CallProvider extends ChangeNotifier {
       if (updateType == ZegoUpdateType.Add) {
         for (final stream in streamList) {
           debugPrint('streaminfo: ${stream.extraInfo}');
-          startPlayStream(stream.streamID, stream.user);
+          startPlayStream(stream);
         }
       } else {
         for (final stream in streamList) {
-          stopPlayStream(stream.streamID, stream.user);
+          stopPlayStream(stream);
         }
       }
     };
@@ -265,7 +297,15 @@ class CallProvider extends ChangeNotifier {
           'onPublisherStateUpdate: streamID: $streamID, state: ${state.name}, errorCode: $errorCode, extendedData: $extendedData');
     };
 
-    ZegoExpressEngine.onRoomStreamExtraInfoUpdate = (roomID, streamList) => {};
+    ZegoExpressEngine.onRoomStreamExtraInfoUpdate = (roomID, streamList) {
+      for (final stream in streamList) {
+        updateStream(stream);
+        debugPrint('streaminfo: ${stream.extraInfo}');
+        // startPlayStream(stream.streamID, stream.user);
+        debugPrint(
+            'onRoomStreamExtraInfoUpdate: roomID: $roomID, extrainfo: ${stream.extraInfo}');
+      }
+    };
   }
 
   void stopListenEvent() {
@@ -314,7 +354,7 @@ class CallProvider extends ChangeNotifier {
 
       setVideoAndAudioState();
     } else {
-      source?.startCapture();
+      await source?.startCapture();
       ZegoExpressEngine.instance.enableCamera(true);
       // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
       ZegoExpressEngine.instance.setVideoSource(

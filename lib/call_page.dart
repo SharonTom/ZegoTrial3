@@ -11,20 +11,10 @@ class CallPage extends StatefulWidget {
 }
 
 class _CallPageState extends State<CallPage> {
-  bool _showRemoteView = true;
-  // Widget? callProvider.localView;
-
   late CallProvider callProvider;
-  // Widget? remoteView;
 
-  toggleRemoteView() {
-    setState(() {
-      _showRemoteView = !_showRemoteView;
-    });
-  }
-
-  bool get showRemoteView {
-    return _showRemoteView && callProvider.remoteViews.isNotEmpty;
+  bool get showControls {
+    return callProvider.showControls && callProvider.remoteViews.isNotEmpty;
   }
 
   double get height {
@@ -52,7 +42,7 @@ class _CallPageState extends State<CallPage> {
                 AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
                   width: MediaQuery.of(context).size.width - 15,
-                  height: showRemoteView ? height : 0,
+                  height: showControls ? height : 0,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -66,27 +56,6 @@ class _CallPageState extends State<CallPage> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: MediaQuery.of(context).size.width,
-                  child: Center(
-                    child: InkWell(
-                      onTap: toggleRemoteView,
-                      child: Container(
-                        color: Colors.white30,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 20, vertical: 3),
-                        child: Icon(
-                          showRemoteView
-                              ? Icons.arrow_drop_up
-                              : Icons.arrow_drop_down,
-                          color: Colors.white,
-                          size: 35,
-                        ),
-                      ),
-                    ),
-                  ),
-                )
               ],
             ),
           ),
@@ -104,26 +73,33 @@ class ZegoLocalUserUI extends StatelessWidget {
 
   bool get showView => userView.isVideoOn || userView.isScreenShare;
 
+  toggleControls() {
+    callProvider.toggleControls();
+  }
+
   @override
   Widget build(BuildContext context) {
     callProvider = Provider.of<CallProvider>(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.grey[900],
-      ),
-      child: showView
-          ? userView.view
-          : SizedBox(
-              child: Center(
-                child: CircleAvatar(
-                  radius: 120,
-                  child: Text(
-                    userView.iconText,
-                    style: const TextStyle(fontSize: 150),
+    return InkWell(
+      onTap: toggleControls,
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.grey[900],
+        ),
+        child: showView
+            ? userView.view
+            : SizedBox(
+                child: Center(
+                  child: CircleAvatar(
+                    radius: 120,
+                    child: Text(
+                      userView.iconText,
+                      style: const TextStyle(fontSize: 150),
+                    ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 }
@@ -138,6 +114,7 @@ class ZegoRemoteUserUI extends StatelessWidget {
   }
 
   bool get showView => userView.isVideoOn || userView.isScreenShare;
+  bool get showAudio => userView.isAudioOn;
 
   @override
   Widget build(BuildContext context) {
@@ -168,15 +145,43 @@ class ZegoRemoteUserUI extends StatelessWidget {
                     : SizedBox(
                         child: Center(
                           child: CircleAvatar(
-                            radius: 60,
+                            radius: 55,
                             child: Text(
                               userView.iconText,
-                              style: const TextStyle(fontSize: 75),
+                              style: const TextStyle(fontSize: 70),
                             ),
                           ),
                         ),
                       ),
-                Text(userView.user.userName),
+                Padding(
+                  padding: const EdgeInsets.only(
+                      top: 10, right: 7, left: 7, bottom: 2),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Icon(
+                        showAudio ? Icons.mic : Icons.mic_off,
+                        color: showAudio ? Colors.green : Colors.red,
+                      ),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Center(
+                          child: Text(
+                            userView.user.userName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
               ],
             ),
           ),
@@ -227,6 +232,8 @@ class _ZegoCallButtonsState extends State<ZegoCallButtons> {
   bool get isAudioOn => localUser!.isAudioOn;
   bool get isScreenShare => localUser!.isScreenShare;
 
+  bool get showControls => callProvider.showControls;
+
   @override
   Widget build(BuildContext context) {
     callProvider = Provider.of<CallProvider>(context);
@@ -237,61 +244,68 @@ class _ZegoCallButtonsState extends State<ZegoCallButtons> {
       child: SizedBox(
         // width: MediaQuery.of(context).size.width / 3,
         height: MediaQuery.of(context).size.width / 3,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  shape: const CircleBorder(), backgroundColor: Colors.red),
-              onPressed: leaveCall,
-              child: const Center(child: Icon(Icons.call_end, size: 32)),
-            ),
-            if (localUser != null) ...[
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    backgroundColor: isVideoOn ? Colors.blue[900] : Colors.red),
-                onPressed: toggleVideo,
-                child: Center(
-                  child: Icon(
-                    isVideoOn
-                        ? Icons.videocam_outlined
-                        : Icons.videocam_off_outlined,
-                    size: 32,
+        child: showControls
+            ? Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                        shape: const CircleBorder(),
+                        backgroundColor: Colors.red),
+                    onPressed: leaveCall,
+                    child: const Center(child: Icon(Icons.call_end, size: 32)),
                   ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    backgroundColor: isAudioOn ? Colors.blue[900] : Colors.red),
-                onPressed: toggleAudio,
-                child: Center(
-                  child: Icon(
-                    isAudioOn ? Icons.mic_outlined : Icons.mic_off_outlined,
-                    size: 32,
-                  ),
-                ),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                    shape: const CircleBorder(),
-                    backgroundColor:
-                        isScreenShare ? Colors.blue[900] : Colors.red),
-                onPressed: toggleScreenShare,
-                child: Center(
-                  child: Icon(
-                    isScreenShare
-                        ? Icons.screen_share_outlined
-                        : Icons.stop_screen_share_outlined,
-                    size: 32,
-                  ),
-                ),
-              ),
-            ]
-          ],
-        ),
+                  if (localUser != null) ...[
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor:
+                              isVideoOn ? Colors.blue[900] : Colors.red),
+                      onPressed: toggleVideo,
+                      child: Center(
+                        child: Icon(
+                          isVideoOn
+                              ? Icons.videocam_outlined
+                              : Icons.videocam_off_outlined,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor:
+                              isAudioOn ? Colors.blue[900] : Colors.red),
+                      onPressed: toggleAudio,
+                      child: Center(
+                        child: Icon(
+                          isAudioOn
+                              ? Icons.mic_outlined
+                              : Icons.mic_off_outlined,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                          shape: const CircleBorder(),
+                          backgroundColor:
+                              isScreenShare ? Colors.blue[900] : Colors.red),
+                      onPressed: toggleScreenShare,
+                      child: Center(
+                        child: Icon(
+                          isScreenShare
+                              ? Icons.screen_share_outlined
+                              : Icons.stop_screen_share_outlined,
+                          size: 32,
+                        ),
+                      ),
+                    ),
+                  ]
+                ],
+              )
+            : Container(),
       ),
     );
   }
