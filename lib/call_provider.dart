@@ -12,6 +12,7 @@ class UserView {
   bool isAudioOn;
   bool isVideoOn;
   bool isScreenShare;
+  bool isHost;
   ZegoUser user;
 
   UserView({
@@ -22,15 +23,17 @@ class UserView {
     this.isAudioOn = true,
     this.isVideoOn = false,
     this.isScreenShare = false,
+    this.isHost = false,
   });
 
   String get iconText => user.userName.characters.first;
 
-  String get extraInfo => ExtraInfo(
-          isAudioOn: isAudioOn,
-          isVideoOn: isVideoOn,
-          isScreenShare: isScreenShare)
-      .toJson;
+  ExtraInfo get extraInfo => ExtraInfo(
+        isAudioOn: isAudioOn,
+        isVideoOn: isVideoOn,
+        isScreenShare: isScreenShare,
+        isHost: isHost,
+      );
 
   static decodeExtraInfo(String _extraInfo) {
     return ExtraInfo.fromJson(_extraInfo);
@@ -41,26 +44,35 @@ class ExtraInfo {
   bool isAudioOn;
   bool isVideoOn;
   bool isScreenShare;
+  bool isHost;
+  bool isRequestDisconnecting;
 
-  ExtraInfo(
-      {required this.isAudioOn,
-      required this.isVideoOn,
-      required this.isScreenShare});
+  ExtraInfo({
+    required this.isAudioOn,
+    required this.isVideoOn,
+    required this.isScreenShare,
+    this.isHost = false,
+    this.isRequestDisconnecting = false,
+  });
 
   String get toJson {
     return jsonEncode({
       'isAudioOn': isAudioOn,
       'isVideoOn': isVideoOn,
-      'isScreenShare': isScreenShare
+      'isScreenShare': isScreenShare,
+      'isHost': isHost,
     });
   }
 
   factory ExtraInfo.fromJson(String data) {
     final json = jsonDecode(data);
     return ExtraInfo(
-        isAudioOn: json['isAudioOn'],
-        isVideoOn: json['isVideoOn'],
-        isScreenShare: json['isScreenShare']);
+      isAudioOn: json['isAudioOn'],
+      isVideoOn: json['isVideoOn'],
+      isScreenShare: json['isScreenShare'],
+      isHost: json['isHost'] ?? false,
+      isRequestDisconnecting: json['isRequestDisconnecting'] ?? false,
+    );
   }
 }
 
@@ -72,7 +84,7 @@ class CallProvider extends ChangeNotifier {
   bool isVideoOn = true;
   bool isFrontCamera = true;
   bool isScreenShared = false;
-  bool isPublisher = false;
+  bool isHost = false;
   String? token;
   int? uid;
 
@@ -86,6 +98,10 @@ class CallProvider extends ChangeNotifier {
   int? localUserId = 741852964;
 
   bool showControls = true;
+
+  toggleIsHost() {
+    isHost != isHost;
+  }
 
   toggleControls() {
     showControls = !showControls;
@@ -139,6 +155,7 @@ class CallProvider extends ChangeNotifier {
         isVideoOn: isVideoOn,
         isScreenShare: isScreenShared,
         isAudioOn: isAudioOn,
+        isHost: isHost,
       );
       _activeViewFullScreen = localUser;
     }
@@ -169,6 +186,7 @@ class CallProvider extends ChangeNotifier {
             isAudioOn: extraInfo.isAudioOn,
             isVideoOn: extraInfo.isVideoOn,
             isScreenShare: extraInfo.isScreenShare,
+            isHost: extraInfo.isHost,
           ),
         );
         notifyListeners();
@@ -244,6 +262,10 @@ class CallProvider extends ChangeNotifier {
   }
 
   void logoutRoom() {
+    final extraInfo = localUser!.extraInfo;
+    extraInfo.isRequestDisconnecting = true;
+    ZegoExpressEngine.instance.setStreamExtraInfo(extraInfo.toJson);
+    // extrainfo
     localUser = null;
     remoteViews = [];
     ZegoExpressEngine.instance.logoutRoom();
@@ -254,12 +276,12 @@ class CallProvider extends ChangeNotifier {
     // The StreamID must be unique in the room.
     String streamID = '${roomId}_${Random().nextInt(1500)}_call_1';
     setVideoAndAudioState();
-    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo.toJson);
     ZegoExpressEngine.instance.startPublishingStream(streamID);
   }
 
   void stopPublish() {
-    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo.toJson);
     ZegoExpressEngine.instance.stopPublishingStream();
   }
 
@@ -318,6 +340,8 @@ class CallProvider extends ChangeNotifier {
     ZegoExpressEngine.onRoomStateUpdate = null;
     ZegoExpressEngine.onPublisherStateUpdate = null;
     ZegoExpressEngine.onRoomStreamExtraInfoUpdate = null;
+    // Zegoexengi
+    // ZegoExpressEngine.onuser
   }
 
   toggleVideo() {
@@ -331,7 +355,7 @@ class CallProvider extends ChangeNotifier {
       // ZegoExpressEngine.instance.mutePublishStreamVideo(false);
     }
     localUser!.isVideoOn = !localUser!.isVideoOn;
-    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo.toJson);
     notifyListeners();
   }
 
@@ -350,7 +374,7 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.enableAudioCaptureDevice(true);
     }
     localUser!.isAudioOn = !localUser!.isAudioOn;
-    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo.toJson);
     notifyListeners();
   }
 
@@ -374,7 +398,7 @@ class CallProvider extends ChangeNotifier {
       ZegoExpressEngine.instance.enableCamera(true);
     }
     localUser!.isScreenShare = !localUser!.isScreenShare;
-    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo);
+    ZegoExpressEngine.instance.setStreamExtraInfo(localUser!.extraInfo.toJson);
     notifyListeners();
   }
 

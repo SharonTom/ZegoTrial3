@@ -70,6 +70,10 @@ class _MyHomePageState extends State<MyHomePage> {
     callProvider.loginRoom();
   }
 
+  toggleHost(bool? val) {
+    callProvider.toggleIsHost();
+  }
+
   @override
   Widget build(BuildContext context) {
     callProvider = Provider.of<CallProvider>(context);
@@ -111,6 +115,15 @@ class _MyHomePageState extends State<MyHomePage> {
             Text(
               '$_counter',
               style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            Row(
+              children: [
+                Checkbox(value: callProvider.isHost, onChanged: toggleHost),
+                Text(
+                  'is Host',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+              ],
             ),
           ],
         ),
