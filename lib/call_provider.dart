@@ -100,7 +100,8 @@ class CallProvider extends ChangeNotifier {
   bool showControls = true;
 
   toggleIsHost() {
-    isHost != isHost;
+    isHost = !isHost;
+    notifyListeners();
   }
 
   toggleControls() {
@@ -240,7 +241,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQcaWAAEHB1bjdvbXg4cHl4ZjB1Nm4AsIIUr6cC9ypBtdAaGmFeUCGS1cBSgiVU+sbkCdwpjHSCzx6ToZDQgMq1KpWloLocapgPOvo16HGcEfYLzh5BA/bAMl1B4eSKpQ0MswRarzEWX32NfV8Jh5mEhdPDMrrlse3jzKT+u2yT7vW72ofid+3JggOvZl6QKVbFx8DW+U6zchIXDjP5YH6mC3X4b6NhSM5hdYiQPuXZNYluIx3h7t0w1WBWusiyhngEUvfTqoSA';
+        '04AAAAAGQdxkYAEGl4c3N5dWlybWQyM2V6c3AAsORfulVMbwNGaUSEOOy5W2INCux6BSUuWMMiZS199tygVNKJ//wTg6NY48JWPNB6GWkMI47XlYaNmVAOoXK0ZHOP7hK3CvV/AXHftW/BsfQr82yAVPdrZMJib6zToO1XZIBOUSIfjESF1BP946FYn0AckO9egzIgQnBPs1egS/c3H+MhKVjRmy5HFjNf6en7qc1O4e7v6zn91/usrwEpKk1arU1c+hod9ftYidg189zZ';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 
