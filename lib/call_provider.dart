@@ -61,6 +61,7 @@ class ExtraInfo {
       'isVideoOn': isVideoOn,
       'isScreenShare': isScreenShare,
       'isHost': isHost,
+      'isRequestDisconnecting': isRequestDisconnecting,
     });
   }
 
@@ -203,6 +204,9 @@ class CallProvider extends ChangeNotifier {
       view.isAudioOn = extraInfo.isAudioOn;
       view.isVideoOn = extraInfo.isVideoOn;
       view.isScreenShare = extraInfo.isScreenShare;
+      if (extraInfo.isRequestDisconnecting) {
+        stopPlayStream(stream);
+      }
       if (extraInfo.isScreenShare) {
         setActiveUser(view);
       }
