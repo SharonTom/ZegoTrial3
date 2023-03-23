@@ -349,6 +349,18 @@ class CallProvider extends ChangeNotifier {
     // ZegoExpressEngine.onuser
   }
 
+  // Preview
+
+  toggleVideoPreview() {
+    isVideoOn = !isVideoOn;
+    notifyListeners();
+  }
+
+  toggleAudioPreview() {
+    isAudioOn = !isAudioOn;
+    notifyListeners();
+  }
+
   toggleVideo() {
     if (localUser != null && localUser!.isVideoOn) {
       // ZegoExpressEngine.instance.mutePublishStreamVideo(true);
