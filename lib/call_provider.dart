@@ -267,6 +267,9 @@ class CallProvider extends ChangeNotifier {
   }
 
   void logoutRoom() {
+    if (localUser == null) {
+      return;
+    }
     final extraInfo = localUser!.extraInfo;
     extraInfo.isRequestDisconnecting = true;
     ZegoExpressEngine.instance.setStreamExtraInfo(extraInfo.toJson);
@@ -274,6 +277,7 @@ class CallProvider extends ChangeNotifier {
     localUser = null;
     remoteViews = [];
     ZegoExpressEngine.instance.logoutRoom();
+    ZegoExpressEngine.destroyEngine();
   }
 
   void startPublish() {

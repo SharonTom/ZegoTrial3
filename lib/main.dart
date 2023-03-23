@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
           // is not restarted.
           primarySwatch: Colors.blue,
         ),
-        home: CallPreviewPage(),
+        home: MyHomePage(title: 'check camera app'),
       ),
     );
   }
@@ -62,13 +62,10 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   void _incrementCounter() async {
-    await [Permission.microphone, Permission.camera]
-        .request()
-        .then((value) async {
-      await callProvider.initZegoCloud(context);
-    });
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => CallPage()));
-    callProvider.loginRoom();
+    await [Permission.microphone, Permission.camera].request();
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => CallPreviewPage()));
+    // callProvider.loginRoom();
   }
 
   toggleHost(bool? val) {

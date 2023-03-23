@@ -36,12 +36,16 @@ class _CallPreviewPageState extends State<CallPreviewPage> {
   Widget build(BuildContext context) {
     callProvider = Provider.of<CallProvider>(context);
     return Scaffold(
+      backgroundColor: Colors.blueGrey[800],
       appBar: AppBar(title: const Text("Call Preview Page")),
-      body: Stack(
-        children: [
-          if (callProvider.fullScreenView != null) ZegoLocalUserUIPreview(),
-          ZegoCallPreviewButtons()
-        ],
+      body: SizedBox(
+        width: MediaQuery.of(context).size.width,
+        child: Column(
+          children: [
+            Expanded(child: ZegoLocalUserUIPreview()),
+            ZegoCallPreviewButtons(),
+          ],
+        ),
       ),
     );
   }
@@ -58,27 +62,58 @@ class ZegoLocalUserUIPreview extends StatefulWidget {
 
 class _ZegoLocalUserUIPreviewState extends State<ZegoLocalUserUIPreview>
     with AfterLayoutMixin {
+  CameraController? cameraController;
+  List<CameraDescription> _cameras = <CameraDescription>[];
+
+  late CallProvider callProvider;
+
   @override
   FutureOr<void> afterFirstLayout(BuildContext context) {
     initializeCamera();
   }
 
   initializeCamera() async {
-    await [Permission.microphone, Permission.camera].request();
+    // await [Permission.microphone, Permission.camera].request();
 
     _cameras = await availableCameras();
     cameraController = CameraController(
-      _cameras[0],
+      _cameras.last,
       ResolutionPreset.max,
-      enableAudio: callProvider.isAudioOn,
-      imageFormatGroup: ImageFormatGroup.jpeg,
+      enableAudio: false,
     );
+    await cameraController!.initialize();
+    setState(() {});
   }
 
-  CameraController? cameraController;
-  List<CameraDescription> _cameras = <CameraDescription>[];
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // cameraController = cameraController;
 
-  late CallProvider callProvider;
+    // App state changed before we got the chance to initialize.
+    if (cameraController == null || !cameraController!.value.isInitialized) {
+      return;
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      cameraController!.dispose();
+    } else if (state == AppLifecycleState.resumed) {
+      onNewCameraSelected(cameraController!.description);
+    }
+  }
+
+  Future<void> onNewCameraSelected(CameraDescription cameraDescription) async {
+    final CameraController? oldController = cameraController;
+    if (oldController != null) {
+      // `controller` needs to be set to null before getting disposed,
+      // to avoid a race condition when we use the controller that is being
+      // disposed. This happens when camera permission dialog shows up,
+      // which triggers `didChangeAppLifecycleState`, which disposes and
+      // re-creates the controller.
+      cameraController = null;
+      await oldController.dispose();
+    }
+    initializeCamera();
+  }
 
   bool get showView => callProvider.isVideoOn && cameraController != null;
 
@@ -92,6 +127,7 @@ class _ZegoLocalUserUIPreviewState extends State<ZegoLocalUserUIPreview>
     return InkWell(
       onTap: toggleControls,
       child: Container(
+        width: MediaQuery.of(context).size.width,
         decoration: BoxDecoration(
           color: Colors.grey[900],
         ),
@@ -141,7 +177,8 @@ class _ZegoCallPreviewButtonsState extends State<ZegoCallPreviewButtons> {
         .then((value) async {
       await callProvider.initZegoCloud(context);
     });
-    Navigator.of(context).push(MaterialPageRoute(builder: (_) => CallPage()));
+    Navigator.of(context)
+        .pushReplacement(MaterialPageRoute(builder: (_) => CallPage()));
     callProvider.loginRoom();
   }
 
@@ -156,10 +193,10 @@ class _ZegoCallPreviewButtonsState extends State<ZegoCallPreviewButtons> {
   @override
   Widget build(BuildContext context) {
     callProvider = Provider.of<CallProvider>(context);
-    return Positioned(
-      bottom: MediaQuery.of(context).size.height * 0.002,
-      left: MediaQuery.of(context).size.width * 0.1,
-      right: MediaQuery.of(context).size.width * 0.1,
+    return Container(
+      // bottom: MediaQuery.of(context).size.height * 0.002,
+      width: MediaQuery.of(context).size.width * 0.75,
+      // right: MediaQuery.of(context).size.width * 0.1,
       child: SizedBox(
         // width: MediaQuery.of(context).size.width / 3,
         height: MediaQuery.of(context).size.width / 3,
