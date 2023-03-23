@@ -211,8 +211,6 @@ class _ZegoCallButtonsState extends State<ZegoCallButtons> {
     // await callProvider.leaveCall();
     callProvider.stopListenEvent();
     callProvider.logoutRoom();
-
-    callProvider.stopListenEvent();
     navigator.pop();
   }
 

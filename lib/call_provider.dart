@@ -204,8 +204,8 @@ class CallProvider extends ChangeNotifier {
       view.isAudioOn = extraInfo.isAudioOn;
       view.isVideoOn = extraInfo.isVideoOn;
       view.isScreenShare = extraInfo.isScreenShare;
-      if (extraInfo.isRequestDisconnecting) {
-        stopPlayStream(stream);
+      if (extraInfo.isRequestDisconnecting && extraInfo.isHost) {
+        logoutRoom();
       }
       if (extraInfo.isScreenShare) {
         setActiveUser(view);
