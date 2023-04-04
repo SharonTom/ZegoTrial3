@@ -96,7 +96,7 @@ class CallProvider extends ChangeNotifier {
   List<UserView> remoteViews = [];
 
   String? roomId = 'Room-ID';
-  int? localUserId = 741852964;
+  int? localUserId = 741852963;
 
   bool showControls = true;
 
@@ -245,7 +245,7 @@ class CallProvider extends ChangeNotifier {
     ZegoRoomConfig roomConfig = ZegoRoomConfig.defaultConfig()
       ..isUserStatusNotify = true;
     zegoToken =
-        '04AAAAAGQdxkYAEGl4c3N5dWlybWQyM2V6c3AAsORfulVMbwNGaUSEOOy5W2INCux6BSUuWMMiZS199tygVNKJ//wTg6NY48JWPNB6GWkMI47XlYaNmVAOoXK0ZHOP7hK3CvV/AXHftW/BsfQr82yAVPdrZMJib6zToO1XZIBOUSIfjESF1BP946FYn0AckO9egzIgQnBPs1egS/c3H+MhKVjRmy5HFjNf6en7qc1O4e7v6zn91/usrwEpKk1arU1c+hod9ftYidg189zZ';
+        '04AAAAAGQdxmkAEGhnaGE5ZDFlbHp3NGZsMTkAsGYKe9EwTIZEJHXZP+7BalodStAfQGwzkzMAF8SHM61xVRsLKNUDa4lNgqp8A4aaiEMTelrIpttbu6gKxCnJUYkrMRrjvsqnGEkQWZIXHaVpnHf7/dLl7Bb0j+vF8O0T85D7XV6y8p2PJgVeYa6HRa58n9gAGL68YDEJR8mXmv5LvIvTgIPYeiDNKAkoX+uzAWNDRyxaJTTEP10TSOlTj507AG/NAJ45TNBfkpoULLoK';
     // if (kIsWeb) {
     roomConfig.token = zegoToken!;
 
